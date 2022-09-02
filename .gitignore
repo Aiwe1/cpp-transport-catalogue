@@ -31,3 +31,10 @@
 *.out
 *.app
 /.vs
+/transport-catalogue/.vs/TransportCatalogue/v17/Browse.VC.db-wal
+/transport-catalogue/x64/Debug
+/transport-catalogue/.vs/TransportCatalogue
+/transport-catalogue/TransportCatalogue.vcxproj.user
+/transport-catalogue/TransportCatalogue.vcxproj.filters
+/transport-catalogue/TransportCatalogue.vcxproj
+/transport-catalogue/TransportCatalogue.sln
