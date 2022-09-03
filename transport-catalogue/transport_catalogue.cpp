@@ -2,6 +2,7 @@
 
 void TransportCatalogue::AddStop(const Stop& stop) {
 	stops_.push_back(stop);
+	index_stops_.insert({ stops_.back().name, &stops_.back() });
 }
 
 void TransportCatalogue::AddBus(const std::pair<Bus, std::vector<std::string>>& bus_stops) {
@@ -22,6 +23,7 @@ void TransportCatalogue::AddBus(const std::pair<Bus, std::vector<std::string>>& 
 		//stop_to_buses_.insert({ &(*it), {&(buses_.back())} });
 		stop_to_buses_[&(*it)].insert({ &(buses_.back()) });
 	}
+	index_buses_.insert({ buses_.back().name, &buses_.back() });
 }
 
 TransportCatalogue::Stop* TransportCatalogue::FindStop(const std::string& name) {

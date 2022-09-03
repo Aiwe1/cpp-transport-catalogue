@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <functional>
+#include <string_view>
 
 #include "geo.h"
 
@@ -56,6 +57,8 @@ public:
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;
-	std::map<Stop*, std::set<Bus*>> stop_to_buses_;
+	std::unordered_map<Stop*, std::set<Bus*>> stop_to_buses_;
 	std::unordered_map<PairStops, int, PairStopsHasher> dist_;
+	std::unordered_map<std::string_view, Stop*, std::hash<std::string_view>> index_stops_;
+	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> index_buses_;
 };
