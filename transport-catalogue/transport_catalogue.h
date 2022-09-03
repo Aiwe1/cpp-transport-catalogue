@@ -18,43 +18,41 @@
 class TransportCatalogue {
 public:
 	struct Stop {
-		std::string Name;
-		Coordinates c;
+		std::string name;
+		Coordinates coordinate;
 	};
 
 	struct Bus {
-		std::string Name;
-		std::deque<Stop*> Stops;
+		std::string name;
+		std::deque<Stop*> stops;
 		bool is_round_ = false;
 	};
 	struct PairStops
 	{
-		Stop* st1;
-		Stop* st2;
+		Stop* from;
+		Stop* to;
 
 		bool operator==(const PairStops& other) const {
-			return (st1 == other.st1 && st2 == other.st2);
+			return (from == other.from && to == other.to);
 		}
 	};
 	struct PairStopsHasher {
-		size_t operator()(const PairStops& ps) const {
-			std::size_t h1 = std::hash<const void*>{}(ps.st1);
-			std::size_t h2 = std::hash<const void*>{}(ps.st2);
+		size_t operator()(const PairStops& stop) const {
+			std::size_t h1 = std::hash<const void*>{}(stop.from);
+			std::size_t h2 = std::hash<const void*>{}(stop.to);
 			return h1 ^ (h2 << 1);
 		}
 	};
 
-	void AddStop(std::pair<std::string, Coordinates> stop);
-	void AddBus(std::pair<std::pair<std::string, std::vector<std::string>>, bool> bus);
+	void AddStop(const Stop& stop);
+	void AddBus(const std::pair<Bus, std::vector<std::string>>& bus_stops);
 
+	const std::pair<Stop*, std::set<Bus*>> FindStopWithBuses(const std::string& name) const;
 	Stop* FindStop(const std::string& name);
-	Bus* FindBus(const std::string& name);
-	std::string GetInfoBus(const std::string& name) const;
-	std::string GetInfoStop(const std::string& name) const;
-	void AddDistance(std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> dist);
+	const Bus* FindBus(const std::string& name) const;
+	void SetDistance(const std::string& from, const std::string& to, int l);
 	int GetDistance(Stop* st1, Stop* st2) const;
 
-	void PrintAll();
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;

@@ -11,8 +11,8 @@
 #include "transport_catalogue.h"
 
 std::string DeleteSpace(std::string s);
-std::pair<std::pair<std::string, Coordinates>, std::string> SplitStop(const std::string& text);
-std::pair<std::pair<std::string, std::vector<std::string>>, bool> SplitBus(const std::string& text);
+std::pair<TransportCatalogue::Stop, std::string> SplitStop(const std::string& text);
+std::pair<TransportCatalogue::Bus, std::vector<std::string>> SplitBus(const std::string& text);
 std::vector<std::pair<int, std::string>> SplitDistance(std::string& text);
 
-void ReadAll(TransportCatalogue& cat);
+void ReadAll(TransportCatalogue& tc);

@@ -10,4 +10,7 @@
 #include "geo.h"
 #include "transport_catalogue.h"
 
-void ReadRequests(TransportCatalogue& cat);
+void PrintBus(const std::string& name, TransportCatalogue& tc);
+void PrintStop(const std::string& name, TransportCatalogue& tc);
+
+void ReadRequests(TransportCatalogue& tc);
