@@ -10,7 +10,7 @@
 #include "geo.h"
 #include "transport_catalogue.h"
 
-void PrintBus(const std::string& name, TransportCatalogue& tc);
-void PrintStop(const std::string& name, TransportCatalogue& tc);
+void PrintBus(const std::string& name, TransportCatalogue& tc, std::ostream& out);
+void PrintStop(const std::string& name, TransportCatalogue& tc, std::ostream& out);
 
-void ReadRequests(TransportCatalogue& tc);
+void ReadRequests(TransportCatalogue& tc, std::istream& in, std::ostream& out);

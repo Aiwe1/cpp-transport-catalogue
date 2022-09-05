@@ -32,14 +32,14 @@ std::pair<TransportCatalogue::Stop, std::string> SplitStop(const std::string& te
         dis = text.substr(i);
     return { stop, dis };
 }
-std::pair<TransportCatalogue::Bus, std::vector<std::string>> SplitBus(const std::string& text) {
-    TransportCatalogue::Bus bus;
+TransportCatalogue::BusToStops SplitBus(const std::string& text) {
     using namespace std;
-    bus.is_round_ = false;
-    vector<string> stops;
+
+    TransportCatalogue::BusToStops BusToStops;
+    BusToStops.bus.is_round_ = false;
 
     int i = text.find(':');
-    bus.name = text.substr(4, i - 4);
+    BusToStops.bus.name = text.substr(4, i - 4);
     ++i;
 
     for (; i < text.size(); ++i) {
@@ -48,12 +48,12 @@ std::pair<TransportCatalogue::Bus, std::vector<std::string>> SplitBus(const std:
             ++i;
         }
         if (text[i] == '>')
-            bus.is_round_ = true;
+            BusToStops.bus.is_round_ = true;
 
-        stops.push_back(DeleteSpace(text.substr(x, i - x)));
+        BusToStops.stops.push_back(DeleteSpace(text.substr(x, i - x)));
     }
 
-    return pair(bus, stops);
+    return BusToStops;
 }
 
 std::vector<std::pair<int, std::string>> SplitDistance(std::string& text) {
@@ -81,18 +81,18 @@ std::vector<std::pair<int, std::string>> SplitDistance(std::string& text) {
     return res;
 }
 
-void ReadAll(TransportCatalogue& tc) {
+void ReadAll(TransportCatalogue& tc, std::istream& is) {
     using namespace std;
     string line;
 
     int N = 0;
-    getline(cin, line);
+    getline(is, line);
     N = stoi(line);
     vector<string> commands;
     commands.reserve(N);
 
     for (int i = 0; i < N; ++i) {
-        getline(cin, line);
+        getline(is, line);
         commands.push_back(line);
     }
     sort(commands.begin(), commands.end(), [](string& s1, string& s2) {return s1[0] > s2[0]; });
@@ -102,9 +102,6 @@ void ReadAll(TransportCatalogue& tc) {
         if (command[0] == 'S') {
             auto [stop, dis] = SplitStop(command);
             tc.AddStop(stop);
-            // —делано так, что бы рассто€ни€ между остановками добавл€лись только
-            // после цикла(в последней строчки функции) и лишн€€ информаци€ не хранилась в классе
-            // я не понимаю, как и зачем это делать внутри класса, если требуетс€ разнести ввод информации и методы класса
             if (dis.size() > 0) {
                 distances.insert({ stop.name, SplitDistance(dis) });
             }
@@ -114,8 +111,8 @@ void ReadAll(TransportCatalogue& tc) {
         }
     }
     for (auto& [from, dis_to_stops] : distances) {
-        for (auto& [l, to] : dis_to_stops) {
-            tc.SetDistance(from, to, l);
+        for (auto& [dis, to] : dis_to_stops) {
+            tc.SetDistance(from, to, dis);
         }
 
     }

@@ -44,14 +44,22 @@ public:
 			return h1 ^ (h2 << 1);
 		}
 	};
-
 	void AddStop(const Stop& stop);
-	void AddBus(const std::pair<Bus, std::vector<std::string>>& bus_stops);
 
-	const std::pair<Stop*, std::set<Bus*>> FindStopWithBuses(const std::string& name) const;
+	struct BusToStops {
+		Bus bus;
+		std::vector<std::string> stops;
+	};
+	void AddBus(const BusToStops& bus_stops);
+
+	struct StopToBuses {
+		Stop* stop = nullptr;
+		std::set<Bus*> buses;
+	};
+	const StopToBuses FindStopWithBuses(const std::string& name) const;
 	Stop* FindStop(const std::string& name);
 	const Bus* FindBus(const std::string& name) const;
-	void SetDistance(const std::string& from, const std::string& to, int l);
+	void SetDistance(const std::string& from, const std::string& to, int dist);
 	int GetDistance(Stop* st1, Stop* st2) const;
 
 private:
