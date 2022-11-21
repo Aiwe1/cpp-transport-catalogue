@@ -38,3 +38,8 @@
 /transport-catalogue/TransportCatalogue.vcxproj.filters
 /transport-catalogue/TransportCatalogue.vcxproj
 /transport-catalogue/TransportCatalogue.sln
+/transport-catalogue/ cpp-transport-catalogue.vcxproj.user
+/transport-catalogue/ cpp-transport-catalogue.vcxproj.filters
+/transport-catalogue/ cpp-transport-catalogue.vcxproj
+/transport-catalogue/ cpp-transport-catalogue.sln
+/transport-catalogue/.vs/ cpp-transport-catalogue/v17

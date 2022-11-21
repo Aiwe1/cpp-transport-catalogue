@@ -16,6 +16,7 @@ int main()
 
     ReadAll(tc, cin);
     ReadRequests(tc, cin, cout);
+    //
 } 
 
 /*
