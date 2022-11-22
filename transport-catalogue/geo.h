@@ -1,5 +1,24 @@
 #pragma once
 
+namespace geo {
+
+struct Coordinates {
+    double lat; // Широта
+    double lng; // Долгота
+    bool operator==(const Coordinates& other) const {
+        return lat == other.lat && lng == other.lng;
+    }
+    bool operator!=(const Coordinates& other) const {
+        return !(*this == other);
+    }
+};
+
+double ComputeDistance(Coordinates from, Coordinates to);
+
+}  // namespace geo
+/*
+#pragma once
+
 #include <cmath>
 
 struct Coordinates {
@@ -23,3 +42,4 @@ inline double ComputeDistance(Coordinates from, Coordinates to) {
                 + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr))
         * 6371000;
 }
+*/

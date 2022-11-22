@@ -20,7 +20,7 @@ class TransportCatalogue {
 public:
 	struct Stop {
 		std::string name;
-		Coordinates coordinate;
+		geo::Coordinates coordinate;
 	};
 
 	struct Bus {

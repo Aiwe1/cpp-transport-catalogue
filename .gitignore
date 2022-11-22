@@ -43,3 +43,5 @@
 /transport-catalogue/ cpp-transport-catalogue.vcxproj
 /transport-catalogue/ cpp-transport-catalogue.sln
 /transport-catalogue/.vs/ cpp-transport-catalogue/v17
+/transport-catalogue/input.json
+/transport-catalogue/output.json
