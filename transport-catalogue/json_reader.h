@@ -10,6 +10,7 @@
 #include "geo.h"
 #include "transport_catalogue.h"
 #include "json.h"
+#include "map_renderer.h"
 /*
 void PrintBus(const std::string& name, TransportCatalogue& tc, std::ostream& out) {
 	using namespace std;
@@ -193,4 +194,5 @@ std::vector<std::pair<int, std::string>> SplitDistance(std::string& text) {
 }*/
 void BusJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
 void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
+void PrintJson(TransportCatalogue& tc, json::Dict& a, std::ostream& os);
 void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os);

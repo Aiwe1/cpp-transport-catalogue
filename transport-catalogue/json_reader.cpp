@@ -59,7 +59,6 @@ void BusJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) 
     }
 
 }
-
 void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
     using namespace std;
     using namespace json;
@@ -95,6 +94,39 @@ void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict)
 
     dict.insert({ {"buses"s }, { arr }});
 }
+
+void PrintJson(TransportCatalogue& tc, json::Dict& a, std::ostream& os) {
+    using namespace json;
+    using namespace std;
+
+    if (a.find("stat_requests"s) == a.end())
+        return;
+
+    const Array& stat = a.at("stat_requests"s).AsArray();
+
+    Array arr;
+    for (const auto& unit_ : stat) {
+        //Dict dict;
+        const auto& unit = unit_.AsMap();
+        if (unit.at("type").AsString() == "Stop") {
+            Dict dict; // = StopJson(unit.at("name"s).AsString(), tc);
+            dict.insert({ "request_id"s, unit.at("id"s).AsInt() });
+
+            //dict.insert({ "buses"s, StopJson(unit.at("name"s).AsString(), tc) });
+            StopJson(unit.at("name"s).AsString(), tc, dict);
+            arr.push_back(dict);
+        }
+        else if (unit.at("type").AsString() == "Bus") {
+            Dict dict;
+            dict.insert({ "request_id"s, unit.at("id").AsInt() });
+            BusJson(unit.at("name"s).AsString(), tc, dict);
+
+            arr.push_back(dict);
+        }
+    }
+    json::Print(Document{ arr }, os);
+}
+
 void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
     using namespace json;
     using namespace std;
@@ -146,34 +178,11 @@ void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
 
         }
     }
+    // render settings
+    RenderSettings render_settings(a.at("render_settings"s).AsMap());
 
+    //test
+    os << render_settings.height << endl;
     // Requests
-    {
-        if (a.find("stat_requests"s) == a.end())
-            return;
-
-        const Array& stat = a.at("stat_requests"s).AsArray();
-
-        Array arr;
-        for (const auto& unit_ : stat) {
-            //Dict dict;
-            const auto& unit = unit_.AsMap();
-            if (unit.at("type").AsString() == "Stop") {
-                Dict dict; // = StopJson(unit.at("name"s).AsString(), tc);
-                dict.insert({ "request_id"s, unit.at("id"s).AsInt() });
-
-                //dict.insert({ "buses"s, StopJson(unit.at("name"s).AsString(), tc) });
-                StopJson(unit.at("name"s).AsString(), tc, dict);
-                arr.push_back(dict);
-            }
-            else if (unit.at("type").AsString() == "Bus") {
-                Dict dict;
-                dict.insert({ "request_id"s, unit.at("id").AsInt() });
-                BusJson(unit.at("name"s).AsString(), tc, dict);
-
-                arr.push_back(dict);
-            }
-        }
-        json::Print(Document{ arr }, os);
-    }
+    //PrintJson(tc, a, os);
 }
