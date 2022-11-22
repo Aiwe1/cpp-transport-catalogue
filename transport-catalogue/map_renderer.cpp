@@ -66,3 +66,48 @@ RenderSettings::RenderSettings(const json::Dict& d) {
 	}
 
 }
+
+void MakeSVG(RenderSettings& render_settings, TransportCatalogue& tc, std::ostream& os) {
+	using namespace svg;
+	
+	auto& buses = tc.GetAllBuses();
+	std::sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus& r, TransportCatalogue::Bus& l) {
+												return r.name < l.name; });
+	//std::set<TransportCatalogue::Bus> buses = tc.GetAllBuses();
+	std::vector<geo::Coordinates> all_coords;
+	for (const auto& bus : buses) {
+		for (const auto& stop : bus.stops) {
+			all_coords.push_back(stop->coordinate);
+		}
+	}
+
+	SphereProjector SP(all_coords.begin(), all_coords.end(),
+		render_settings.width, render_settings.height, render_settings.padding);
+
+	svg::Document svg_doc;
+
+	for (int i = 0; i < buses.size(); ++i) {
+		Polyline line;
+		line.SetFillColor(NoneColor);
+
+		line.SetStrokeColor(render_settings.color_palette[i]);
+		line.SetStrokeWidth(render_settings.line_width);
+		line.SetStrokeLineCap(StrokeLineCap::ROUND);
+		line.SetStrokeLineJoin(StrokeLineJoin::ROUND);
+
+		for (auto& c : buses[i].stops) {
+			Point p = SP(c->coordinate);
+			line.AddPoint(p);
+		}
+		if (!buses[i].is_round_) {
+			for (int j = buses[i].stops.size() - 2; j >= 0; --j) {
+				Point p = SP(buses[i].stops[j]->coordinate);
+				line.AddPoint(p);
+			}
+		}
+		svg_doc.Add(line);
+	}
+	svg_doc.Render(os);
+
+	return;
+}

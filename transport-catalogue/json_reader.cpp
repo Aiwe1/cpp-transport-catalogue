@@ -180,9 +180,9 @@ void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
     }
     // render settings
     RenderSettings render_settings(a.at("render_settings"s).AsMap());
-
+    MakeSVG(render_settings, tc, os);
+    
     //test
-    os << render_settings.height << endl;
     // Requests
     //PrintJson(tc, a, os);
 }

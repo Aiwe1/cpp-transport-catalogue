@@ -9,6 +9,7 @@
 #include "geo.h"
 #include "svg.h"
 #include "json.h"
+#include "transport_catalogue.h"
 
 inline const double EPSILON = 1e-6;
 inline bool IsZero(double value) {
@@ -119,3 +120,5 @@ struct RenderSettings {
 
     std::vector<svg::Color> color_palette;
 };
+
+void MakeSVG(RenderSettings& render_settings, TransportCatalogue& tc, std::ostream& os);

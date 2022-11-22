@@ -32,7 +32,7 @@ using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
 // мы сделаем так, что она будет одной на все единицы трансляции,
 // которые подключают этот заголовок.
 // В противном случае каждая единица трансляции будет использовать свою копию этой константы
-inline const Color NoneColor{  };
+inline const Color NoneColor{};
 
 struct PrintColor {
     std::ostream& out;

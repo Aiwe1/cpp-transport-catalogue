@@ -62,6 +62,10 @@ public:
 	void SetDistance(const std::string& from, const std::string& to, int dist);
 	int GetDistance(Stop* st1, Stop* st2) const;
 
+	std::deque<Bus> GetAllBuses() const {
+		return buses_;
+	}
+
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;
