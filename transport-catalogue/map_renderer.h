@@ -99,26 +99,17 @@ struct RenderSettings {
 
     int bus_label_font_size;
 
-    struct BusLabelOffset {
-        double dx;
-        double dy;
-    };
-
-    BusLabelOffset bus_label_offset;
+    svg::Point bus_label_offset;
 
     int stop_label_font_size;
 
-    struct StopLabelOffset {
-        double dx;
-        double dy;
-    };
-    StopLabelOffset stop_label_offset;
+    svg::Point stop_label_offset;
 
-    std::optional<svg::Color> underlayer_color;
+    svg::Color underlayer_color;
     
     double underlayer_width;
 
     std::vector<svg::Color> color_palette;
 };
 
-void MakeSVG(RenderSettings& render_settings, TransportCatalogue& tc, std::ostream& os);
+void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os);

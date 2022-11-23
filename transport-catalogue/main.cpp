@@ -10,10 +10,10 @@ int main()
     TransportCatalogue tc;
 
     std::ifstream ifs("D:\\Project VS\\!сдавать\\cpp-transport-catalogue\\transport-catalogue\\input.json");
-    //std::ofstream out;
-    //out.open("C:\\Projects VS\\TransportCatalogue\\tests\\out.txt");
+    std::ofstream out;
+    out.open("D:\\Project VS\\!сдавать\\cpp-transport-catalogue\\transport-catalogue\\SVGout.svg");
 
-    ReadAll(tc, ifs, std::cout);
+    ReadAll(tc, ifs, out);
     //ReadRequests(tc, cin, cout);
     //return 0;
 } 

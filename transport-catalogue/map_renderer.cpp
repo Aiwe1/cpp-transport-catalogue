@@ -13,13 +13,13 @@ RenderSettings::RenderSettings(const json::Dict& d) {
 
 	bus_label_font_size = d.at("bus_label_font_size").AsInt();
 
-	bus_label_offset.dx = d.at("bus_label_offset").AsArray()[0].AsDouble();
-	bus_label_offset.dy = d.at("bus_label_offset").AsArray()[1].AsDouble();
+	bus_label_offset.x = d.at("bus_label_offset").AsArray()[0].AsDouble();
+	bus_label_offset.y = d.at("bus_label_offset").AsArray()[1].AsDouble();
 
 	stop_label_font_size = d.at("stop_label_font_size").AsInt();
 
-	stop_label_offset.dx = d.at("stop_label_offset").AsArray()[0].AsDouble();
-	stop_label_offset.dy = d.at("stop_label_offset").AsArray()[1].AsDouble();
+	stop_label_offset.x = d.at("stop_label_offset").AsArray()[0].AsDouble();
+	stop_label_offset.y = d.at("stop_label_offset").AsArray()[1].AsDouble();
 
 	underlayer_width = d.at("underlayer_width").AsDouble();
 
@@ -67,34 +67,70 @@ RenderSettings::RenderSettings(const json::Dict& d) {
 
 }
 
-void MakeSVG(RenderSettings& render_settings, TransportCatalogue& tc, std::ostream& os) {
+void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os) {
 	using namespace svg;
 	
-	auto& buses = tc.GetAllBuses();
+	auto buses = tc.GetAllBuses();
 	std::sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus& r, TransportCatalogue::Bus& l) {
 												return r.name < l.name; });
 	//std::set<TransportCatalogue::Bus> buses = tc.GetAllBuses();
 	std::vector<geo::Coordinates> all_coords;
+	std::map<std::string, geo::Coordinates> stops_sorted;
 	for (const auto& bus : buses) {
 		for (const auto& stop : bus.stops) {
 			all_coords.push_back(stop->coordinate);
+			stops_sorted.insert({ stop->name, stop->coordinate });
 		}
 	}
-
 	SphereProjector SP(all_coords.begin(), all_coords.end(),
-		render_settings.width, render_settings.height, render_settings.padding);
+		rs.width, rs.height, rs.padding);
+
+	std::vector<svg::Circle> circles;
+	std::vector<svg::Text> stop_names;
+	for (const auto& [s, p] : stops_sorted) {
+		Circle c;
+		c.SetRadius(rs.stop_radius).SetFillColor("white"s).SetCenter(SP(p));
+		circles.push_back(c);
+
+		Text t1;
+		t1.SetData(s).SetPosition(SP(p)).SetOffset(rs.stop_label_offset).SetFontSize(rs.stop_label_font_size).
+			SetFontFamily("Verdana"s);
+		Text t2 = t1;
+		t1.SetFillColor(rs.underlayer_color).SetStrokeColor(rs.underlayer_color).
+			SetStrokeWidth(rs.underlayer_width).SetStrokeLineCap(StrokeLineCap::ROUND).
+			SetStrokeLineJoin(StrokeLineJoin::ROUND);
+		t2.SetFillColor("black"s);
+		stop_names.push_back(t1);
+		stop_names.push_back(t2);
+	}
 
 	svg::Document svg_doc;
+	std::vector<svg::Text> bus_names;
 
-	for (int i = 0; i < buses.size(); ++i) {
+	// polylines
+	for (int i = 0; i < (int)buses.size(); ++i) {
+		if (buses[i].stops.size() < 2)
+			continue;
 		Polyline line;
-		line.SetFillColor(NoneColor);
-
-		line.SetStrokeColor(render_settings.color_palette[i]);
-		line.SetStrokeWidth(render_settings.line_width);
-		line.SetStrokeLineCap(StrokeLineCap::ROUND);
-		line.SetStrokeLineJoin(StrokeLineJoin::ROUND);
-
+		Text bus_name1, bus_name2;
+		
+		bus_name1.SetFontSize(rs.bus_label_font_size).SetOffset(rs.bus_label_offset).
+			SetFontFamily("Verdana"s).SetFontWeight("bold"s).SetData(buses[i].name).
+			SetPosition(SP(buses[i].stops[0]->coordinate));
+		bus_name2 = bus_name1;
+		bus_name1.SetFillColor(rs.underlayer_color).SetStrokeColor(rs.underlayer_color).
+			SetStrokeWidth(rs.underlayer_width).SetStrokeLineCap(StrokeLineCap::ROUND).
+			SetStrokeLineJoin(StrokeLineJoin::ROUND);
+		bus_name2.SetFillColor(rs.color_palette[i % (int)rs.color_palette.size()]);
+		bus_names.push_back(bus_name1);
+		bus_names.push_back(bus_name2);
+		{
+			line.SetFillColor(NoneColor);
+			line.SetStrokeColor(rs.color_palette[i % (int)rs.color_palette.size()]);
+			line.SetStrokeWidth(rs.line_width);
+			line.SetStrokeLineCap(StrokeLineCap::ROUND);
+			line.SetStrokeLineJoin(StrokeLineJoin::ROUND);
+		}
 		for (auto& c : buses[i].stops) {
 			Point p = SP(c->coordinate);
 			line.AddPoint(p);
@@ -104,10 +140,25 @@ void MakeSVG(RenderSettings& render_settings, TransportCatalogue& tc, std::ostre
 				Point p = SP(buses[i].stops[j]->coordinate);
 				line.AddPoint(p);
 			}
+			if (buses[i].stops[0]->name != buses[i].stops.back()->name)
+			{
+				bus_name1.SetPosition(SP(buses[i].stops.back()->coordinate));
+				bus_name2.SetPosition(SP(buses[i].stops.back()->coordinate));
+				bus_names.push_back(bus_name1);
+				bus_names.push_back(bus_name2);
+			}
 		}
-		svg_doc.Add(line);
+		svg_doc.Add(std::move(line));
+	}
+
+	for (auto& b : bus_names) {
+		svg_doc.Add(std::move(b));
+	}
+	for (auto& c : circles) {
+		svg_doc.Add(std::move(c));
+	}
+	for (auto& s : stop_names) {
+		svg_doc.Add(std::move(s));
 	}
 	svg_doc.Render(os);
-
-	return;
 }
