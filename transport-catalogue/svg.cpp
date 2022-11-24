@@ -132,25 +132,6 @@ void Text::RenderObject(const RenderContext& context) const {
     //out  << "\">"sv << data_ << "</text>"sv;
     out << ">"sv << data_ << "</text>"sv;
 }
-/*
-void Text::RenderObject(const RenderContext& context) const {
-    auto& out = context.out;
-    // <text x="35" y="20" dx="0" dy="6" font-size="12" font-family="Verdana" font-weight="bold">Hello C++</text>
-    out << "<text x=\""sv << pos_.x << "\" y=\""sv << pos_.y << "\" dx=\""sv << offset_.x << "\" dy=\""sv << offset_.y
-        << "\" font-size=\""sv << size_;
-
-    if (font_family_.size() > 0) {
-        out << "\" font-family=\""sv << font_family_;
-    }
-    if (font_weight_.size() > 0) {
-        out << "\" font-weight=\""sv << font_weight_;
-    }
-    out << "\""sv;
-    RenderAttrs(context.out);
-    //out  << "\">"sv << data_ << "</text>"sv;
-    out << ">"sv << data_ << "</text>"sv;
-} */
-
 // ---------- Doc ----------
 void Document::AddPtr(std::unique_ptr<Object>&& obj) {
     objects_.emplace_back(std::move(obj));

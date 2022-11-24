@@ -112,4 +112,8 @@ struct RenderSettings {
     std::vector<svg::Color> color_palette;
 };
 
-void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os);
+std::pair<std::vector<svg::Circle>, std::vector<svg::Text>> StopsToSVG(const RenderSettings& rs, const  std::map<std::string,
+    geo::Coordinates>& stops_sorted, const SphereProjector& SP);
+svg::Document BusesToSVG(const RenderSettings& rs, const SphereProjector& SP,
+    const std::deque<TransportCatalogue::Bus>& buses);
+void MakeSVG(const RenderSettings& rs, const TransportCatalogue& tc, std::ostream& os);

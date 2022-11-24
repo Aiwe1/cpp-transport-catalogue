@@ -12,8 +12,8 @@
 #include "json.h"
 #include "map_renderer.h"
 
-void BusJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
-void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
+void BusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
+void StopToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict);
 void PrintJson(RenderSettings& rs, TransportCatalogue& tc, json::Dict& a, std::ostream& os);
 void AddBusesStops(TransportCatalogue& tc, json::Array& base);
 void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os);

@@ -1,5 +1,7 @@
 #include "map_renderer.h"
 
+using namespace svg;
+
 RenderSettings::RenderSettings(const json::Dict& d) {
 	using namespace json;
 
@@ -55,7 +57,7 @@ RenderSettings::RenderSettings(const json::Dict& d) {
 			col.blue = a.AsArray()[2].AsInt();
 			color_palette.push_back(col);
 		}
-		else {
+		else if (a.AsArray().size() == 4) {
 			svg::Rgba col;
 			col.red = a.AsArray()[0].AsInt();
 			col.green = a.AsArray()[1].AsInt();
@@ -67,24 +69,8 @@ RenderSettings::RenderSettings(const json::Dict& d) {
 
 }
 
-void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os) {
-	using namespace svg;
-	
-	auto buses = tc.GetAllBuses();
-	std::sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus& r, TransportCatalogue::Bus& l) {
-												return r.name < l.name; });
-	//std::set<TransportCatalogue::Bus> buses = tc.GetAllBuses();
-	std::vector<geo::Coordinates> all_coords;
-	std::map<std::string, geo::Coordinates> stops_sorted;
-	for (const auto& bus : buses) {
-		for (const auto& stop : bus.stops) {
-			all_coords.push_back(stop->coordinate);
-			stops_sorted.insert({ stop->name, stop->coordinate });
-		}
-	}
-	SphereProjector SP(all_coords.begin(), all_coords.end(),
-		rs.width, rs.height, rs.padding);
-
+std::pair<std::vector<svg::Circle>, std::vector<svg::Text>> StopsToSVG(const RenderSettings& rs, 
+			const std::map<std::string,	geo::Coordinates>& stops_sorted, const SphereProjector& SP) {
 	std::vector<svg::Circle> circles;
 	std::vector<svg::Text> stop_names;
 	for (const auto& [s, p] : stops_sorted) {
@@ -104,16 +90,21 @@ void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os) {
 		stop_names.push_back(t2);
 	}
 
+	return std::make_pair(circles, stop_names);
+}
+
+svg::Document BusesToSVG(const RenderSettings& rs, const SphereProjector& SP, 
+						const std::deque<TransportCatalogue::Bus>& buses) {
 	svg::Document svg_doc;
 	std::vector<svg::Text> bus_names;
 
 	// polylines
-	for (int i = 0; i < (int)buses.size(); ++i) {
+	for (size_t i = 0; i < buses.size(); ++i) {
 		if (buses[i].stops.size() < 2)
 			continue;
 		Polyline line;
 		Text bus_name1, bus_name2;
-		
+
 		bus_name1.SetFontSize(rs.bus_label_font_size).SetOffset(rs.bus_label_offset).
 			SetFontFamily("Verdana"s).SetFontWeight("bold"s).SetData(buses[i].name).
 			SetPosition(SP(buses[i].stops[0]->coordinate));
@@ -121,12 +112,12 @@ void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os) {
 		bus_name1.SetFillColor(rs.underlayer_color).SetStrokeColor(rs.underlayer_color).
 			SetStrokeWidth(rs.underlayer_width).SetStrokeLineCap(StrokeLineCap::ROUND).
 			SetStrokeLineJoin(StrokeLineJoin::ROUND);
-		bus_name2.SetFillColor(rs.color_palette[i % (int)rs.color_palette.size()]);
+		bus_name2.SetFillColor(rs.color_palette[i % rs.color_palette.size()]);
 		bus_names.push_back(bus_name1);
 		bus_names.push_back(bus_name2);
 		{
 			line.SetFillColor(NoneColor);
-			line.SetStrokeColor(rs.color_palette[i % (int)rs.color_palette.size()]);
+			line.SetStrokeColor(rs.color_palette[i % rs.color_palette.size()]);
 			line.SetStrokeWidth(rs.line_width);
 			line.SetStrokeLineCap(StrokeLineCap::ROUND);
 			line.SetStrokeLineJoin(StrokeLineJoin::ROUND);
@@ -154,6 +145,29 @@ void MakeSVG(RenderSettings& rs, TransportCatalogue& tc, std::ostream& os) {
 	for (auto& b : bus_names) {
 		svg_doc.Add(std::move(b));
 	}
+
+	return svg_doc;
+}
+
+void MakeSVG(const RenderSettings& rs, const TransportCatalogue& tc, std::ostream& os) {
+	auto buses = tc.GetAllBuses();
+	std::sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus& rhs, TransportCatalogue::Bus& lhs) {
+												return rhs.name < lhs.name; });
+
+	std::vector<geo::Coordinates> all_coords;
+	std::map<std::string, geo::Coordinates> stops_sorted;
+	for (const auto& bus : buses) {
+		for (const auto& stop : bus.stops) {
+			all_coords.push_back(stop->coordinate);
+			stops_sorted.insert({ stop->name, stop->coordinate });
+		}
+	}
+	SphereProjector SP(all_coords.begin(), all_coords.end(), rs.width, rs.height, rs.padding);
+
+	auto [circles, stop_names] = StopsToSVG(rs, stops_sorted, SP);
+
+	svg::Document svg_doc = BusesToSVG(rs, SP, buses);
+
 	for (auto& c : circles) {
 		svg_doc.Add(std::move(c));
 	}

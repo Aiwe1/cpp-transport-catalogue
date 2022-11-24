@@ -1,9 +1,9 @@
 #include "json_reader.h"
 
-void BusJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
-    using namespace std;
-    using namespace json;
+using namespace json;
+using namespace std;
 
+void BusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
     const auto& bus = tc.FindBus(name);
     //Dict dict;
     //out << "Bus "s << name << ": "s;
@@ -12,60 +12,56 @@ void BusJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) 
         //out << "not found"s;
         return;// dict;
     }
-    else if (bus->is_round_ == true) {
+    else if (bus->is_round_) {
         //Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature	
         set<TransportCatalogue::Stop*> Uniq;
-        double l = 0.0;
+        double curva = 0.0;
         int length = 0;
-        int i = 0;
 
-        for (; i < (int)bus->stops.size() - 1; ++i) {
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
             Uniq.insert(bus->stops.at(i));
-            l += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
+            curva += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
 
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
         }
-        l = static_cast<double>(length) / l;
+        curva = static_cast<double>(length) / curva;
         //out << bus->stops.size() << " stops on route, " << Uniq.size() << " unique stops, "s <<
         //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {l} });
+        dict.insert({ "curvature"s, {curva} });
         dict.insert({ "route_length"s, {length} });
-        dict.insert({ "stop_count"s, {(int)bus->stops.size()} });
-        dict.insert({ "unique_stop_count"s, {(int)Uniq.size() } });
-    }
+        dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size())} });
+        dict.insert({ "unique_stop_count"s, {static_cast<int>(Uniq.size()) } });
+    } 
     else {
-        set<TransportCatalogue::Stop*> Uniq;
-        double l = 0.0;
+        set<TransportCatalogue::Stop*> uniq;
+        double curva = 0.0;
         int length = 0;
-        int i = 0;
-        //Bus 750 : 7 stops on route, 3 unique stops, 27400 route length, 1.30853 curvature	
-        for (; i < (int)bus->stops.size() - 1; ++i) {
-            Uniq.insert(bus->stops.at(i));
-            l += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate) * 2.0;
+        size_t i = 0;
+
+        for (; i < bus->stops.size() - 1; ++i) {
+            uniq.insert(bus->stops.at(i));
+            curva += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate) * 2.0;
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
         }
-        Uniq.insert(bus->stops.at(i));
+        uniq.insert(bus->stops.at(i));
 
         for (; i > 0; --i) {
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i - 1));
         }
-        l = static_cast<double>(length) / l;
+        curva = static_cast<double>(length) / curva;
         //out << bus->stops.size() * 2 - 1 << " stops on route, " << Uniq.size() << " unique stops, "s <<
         //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {l} });
+        dict.insert({ "curvature"s, {curva} });
         dict.insert({ "route_length"s, {length} });
-        dict.insert({ "stop_count"s, {(int)(bus->stops.size() * 2 - 1) } });
-        dict.insert({ "unique_stop_count"s, {(int)Uniq.size()} });
+        dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size() * 2 - 1) } });
+        dict.insert({ "unique_stop_count"s, {static_cast<int>(uniq.size())} });
     }
 
 }
-void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
-    using namespace std;
-    using namespace json;
-
-    const auto st = tc.FindStop(name);
+void StopToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
+    const auto stop = tc.FindStop(name);
     //out << "Stop "s << name << ": "s;
-    if (!st) {
+    if (!stop) {
         //out << "not found"s;
         dict.insert({ {"error_message"s}, {"not found"s } });
         return;
@@ -73,36 +69,29 @@ void StopJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict)
     Array arr;
     const auto stop_to_buses = tc.FindStopWithBuses(name);
 
-    if (stop_to_buses.buses.size() == 0) {
-        //out << "no buses"s;
-    }
-    else {
-        //out << "buses";
-        vector<TransportCatalogue::Bus*> v;
-        v.reserve(stop_to_buses.buses.size());
+    if (stop_to_buses.buses.size() > 0) {
+        vector<TransportCatalogue::Bus*> buses; 
+        buses.reserve(stop_to_buses.buses.size());
         arr.reserve(stop_to_buses.buses.size());
-        for (const auto& b : stop_to_buses.buses) {
-            v.push_back(b);
+        for (const auto& bus : stop_to_buses.buses) {
+            buses.push_back(bus);
         }
-        sort(v.begin(), v.end(), [](TransportCatalogue::Bus* l, TransportCatalogue::Bus* r)
-            {return l->name < r->name; });
-        for (const auto& b : v) {
+        sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus* lhs, TransportCatalogue::Bus* rhs)
+            {return lhs->name < rhs->name; });
+        for (const auto& bus : buses) {
             //out << ' ' << b->name;
-            arr.push_back({ b->name });
+            arr.push_back({ bus->name });
         }
     }
 
     dict.insert({ {"buses"s }, { arr }});
 }
 
-void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& a, std::ostream& os) {
-    using namespace json;
-    using namespace std;
-
-    if (a.find("stat_requests"s) == a.end())
+void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
+    if (request.find("stat_requests"s) == request.end())
         return;
 
-    const Array& stat = a.at("stat_requests"s).AsArray();
+    const Array& stat = request.at("stat_requests"s).AsArray();
 
     Array arr;
     for (const auto& unit_ : stat) {
@@ -113,13 +102,13 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& a, std::o
             dict.insert({ "request_id"s, unit.at("id"s).AsInt() });
 
             //dict.insert({ "buses"s, StopJson(unit.at("name"s).AsString(), tc) });
-            StopJson(unit.at("name"s).AsString(), tc, dict);
+            StopToJson(unit.at("name"s).AsString(), tc, dict);
             arr.push_back(dict);
         }
         else if (unit.at("type").AsString() == "Bus") {
             Dict dict;
             dict.insert({ "request_id"s, unit.at("id").AsInt() });
-            BusJson(unit.at("name"s).AsString(), tc, dict);
+            BusToJson(unit.at("name"s).AsString(), tc, dict);
 
             arr.push_back(dict);
         }
@@ -137,9 +126,6 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& a, std::o
 }
 
 void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
-    using namespace json;
-    using namespace std;
-
     unordered_map<string, vector<pair<int, string>>> distances;
     for (const auto& unit_ : base) {
         const auto& unit = unit_.AsMap();
@@ -184,9 +170,6 @@ void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
 }
 
 void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
-    using namespace json;
-    using namespace std;
-
     Dict a = Load(is).GetRoot().AsMap();
     // Add
     AddBusesStops(tc, a.at("base_requests"s).AsArray());
