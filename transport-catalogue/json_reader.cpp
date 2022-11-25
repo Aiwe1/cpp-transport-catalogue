@@ -3,7 +3,7 @@
 using namespace json;
 using namespace std;
 
-void BusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
+void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
     const auto& bus = tc.FindBus(name);
     //Dict dict;
     //out << "Bus "s << name << ": "s;
@@ -14,33 +14,34 @@ void BusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict
     }
     else if (bus->is_round_) {
         //Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature	
-        set<TransportCatalogue::Stop*> Uniq;
-        double curva = 0.0;
+        set<TransportCatalogue::Stop*> uniq;
+        double curvature = 0.0;
         int length = 0;
 
-        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
-            Uniq.insert(bus->stops.at(i));
-            curva += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i) { 
+            // не понял про начало с 1. Ну будет bus->stops.size() нулём, ну выйдем сразу из цикла, какая разница?
+            uniq.insert(bus->stops.at(i));
+            curvature += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
 
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
         }
-        curva = static_cast<double>(length) / curva;
+        curvature = static_cast<double>(length) / curvature;
         //out << bus->stops.size() << " stops on route, " << Uniq.size() << " unique stops, "s <<
         //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {curva} });
+        dict.insert({ "curvature"s, {curvature} });
         dict.insert({ "route_length"s, {length} });
         dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size())} });
-        dict.insert({ "unique_stop_count"s, {static_cast<int>(Uniq.size()) } });
+        dict.insert({ "unique_stop_count"s, {static_cast<int>(uniq.size()) } });
     } 
     else {
         set<TransportCatalogue::Stop*> uniq;
-        double curva = 0.0;
+        double curvature = 0.0;
         int length = 0;
         size_t i = 0;
 
         for (; i < bus->stops.size() - 1; ++i) {
             uniq.insert(bus->stops.at(i));
-            curva += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate) * 2.0;
+            curvature += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate) * 2.0;
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
         }
         uniq.insert(bus->stops.at(i));
@@ -48,17 +49,17 @@ void BusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict
         for (; i > 0; --i) {
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i - 1));
         }
-        curva = static_cast<double>(length) / curva;
+        curvature = static_cast<double>(length) / curvature;
         //out << bus->stops.size() * 2 - 1 << " stops on route, " << Uniq.size() << " unique stops, "s <<
         //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {curva} });
+        dict.insert({ "curvature"s, {curvature} });
         dict.insert({ "route_length"s, {length} });
         dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size() * 2 - 1) } });
         dict.insert({ "unique_stop_count"s, {static_cast<int>(uniq.size())} });
     }
 
 }
-void StopToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
+void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
     const auto stop = tc.FindStop(name);
     //out << "Stop "s << name << ": "s;
     if (!stop) {
@@ -102,13 +103,13 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, 
             dict.insert({ "request_id"s, unit.at("id"s).AsInt() });
 
             //dict.insert({ "buses"s, StopJson(unit.at("name"s).AsString(), tc) });
-            StopToJson(unit.at("name"s).AsString(), tc, dict);
+            PutStopToJson(unit.at("name"s).AsString(), tc, dict);
             arr.push_back(dict);
         }
         else if (unit.at("type").AsString() == "Bus") {
             Dict dict;
             dict.insert({ "request_id"s, unit.at("id").AsInt() });
-            BusToJson(unit.at("name"s).AsString(), tc, dict);
+            PutBusToJson(unit.at("name"s).AsString(), tc, dict);
 
             arr.push_back(dict);
         }
