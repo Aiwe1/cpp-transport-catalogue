@@ -19,7 +19,6 @@ void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& d
         int length = 0;
 
         for (size_t i = 0; i < bus->stops.size() - 1; ++i) { 
-            // не понял про начало с 1. Ну будет bus->stops.size() нулём, ну выйдем сразу из цикла, какая разница?
             uniq.insert(bus->stops.at(i));
             curvature += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
 
