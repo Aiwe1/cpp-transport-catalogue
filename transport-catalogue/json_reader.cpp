@@ -3,14 +3,12 @@
 using namespace json;
 using namespace std;
 
-void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
+void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b) {
     const auto& bus = tc.FindBus(name);
-    //Dict dict;
     //out << "Bus "s << name << ": "s;
     if (!bus) {
-        dict.insert({ {"error_message"s}, {"not found"s } });
-        //out << "not found"s;
-        return;// dict;
+        b.Key("error_message"s).Value("not found"s);
+        return;
     }
     else if (bus->is_round_) {
         //Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature	
@@ -18,20 +16,19 @@ void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& d
         double curvature = 0.0;
         int length = 0;
 
-        for (size_t i = 0; i < bus->stops.size() - 1; ++i) { 
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
             uniq.insert(bus->stops.at(i));
             curvature += ComputeDistance(bus->stops.at(i)->coordinate, bus->stops.at(i + 1)->coordinate);
 
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
         }
         curvature = static_cast<double>(length) / curvature;
-        //out << bus->stops.size() << " stops on route, " << Uniq.size() << " unique stops, "s <<
-        //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {curvature} });
-        dict.insert({ "route_length"s, {length} });
-        dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size())} });
-        dict.insert({ "unique_stop_count"s, {static_cast<int>(uniq.size()) } });
-    } 
+
+        b.Key("curvature"s).Value(curvature);
+        b.Key("route_length"s).Value(length);
+        b.Key("stop_count"s).Value(static_cast<int>(bus->stops.size()));
+        b.Key("unique_stop_count"s).Value(static_cast<int>(uniq.size()));
+    }
     else {
         set<TransportCatalogue::Stop*> uniq;
         double curvature = 0.0;
@@ -49,42 +46,38 @@ void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Dict& d
             length += tc.GetDistance(bus->stops.at(i), bus->stops.at(i - 1));
         }
         curvature = static_cast<double>(length) / curvature;
-        //out << bus->stops.size() * 2 - 1 << " stops on route, " << Uniq.size() << " unique stops, "s <<
-        //    length << " route length, "s << setprecision(6) << l << " curvature";
-        dict.insert({ "curvature"s, {curvature} });
-        dict.insert({ "route_length"s, {length} });
-        dict.insert({ "stop_count"s, {static_cast<int>(bus->stops.size() * 2 - 1) } });
-        dict.insert({ "unique_stop_count"s, {static_cast<int>(uniq.size())} });
-    }
 
+        b.Key("curvature"s).Value(curvature);
+        b.Key("route_length"s).Value(length);
+        b.Key("stop_count"s).Value(static_cast<int>(bus->stops.size() * 2 - 1));
+        b.Key("unique_stop_count"s).Value(static_cast<int>(uniq.size()));
+    }
 }
-void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Dict& dict) {
+
+void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b) {
     const auto stop = tc.FindStop(name);
-    //out << "Stop "s << name << ": "s;
+
     if (!stop) {
-        //out << "not found"s;
-        dict.insert({ {"error_message"s}, {"not found"s } });
+        b.Key("error_message"s).Value("not found"s);
         return;
     }
-    Array arr;
+    b.Key("buses"s);
+    b.StartArray();
     const auto stop_to_buses = tc.FindStopWithBuses(name);
 
     if (stop_to_buses.buses.size() > 0) {
-        vector<TransportCatalogue::Bus*> buses; 
+        vector<TransportCatalogue::Bus*> buses;
         buses.reserve(stop_to_buses.buses.size());
-        arr.reserve(stop_to_buses.buses.size());
         for (const auto& bus : stop_to_buses.buses) {
             buses.push_back(bus);
         }
         sort(buses.begin(), buses.end(), [](TransportCatalogue::Bus* lhs, TransportCatalogue::Bus* rhs)
             {return lhs->name < rhs->name; });
         for (const auto& bus : buses) {
-            //out << ' ' << b->name;
-            arr.push_back({ bus->name });
+            b.Value(bus->name);
         }
     }
-
-    dict.insert({ {"buses"s }, { arr }});
+    b.EndArray();
 }
 
 void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
@@ -93,42 +86,41 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, 
 
     const Array& stat = request.at("stat_requests"s).AsArray();
 
-    Array arr;
-    for (const auto& unit_ : stat) {
-        //Dict dict;
-        const auto& unit = unit_.AsMap();
-        if (unit.at("type").AsString() == "Stop") {
-            Dict dict; // = StopJson(unit.at("name"s).AsString(), tc);
-            dict.insert({ "request_id"s, unit.at("id"s).AsInt() });
+    json::Builder b;
+    b.StartArray();
 
-            //dict.insert({ "buses"s, StopJson(unit.at("name"s).AsString(), tc) });
-            PutStopToJson(unit.at("name"s).AsString(), tc, dict);
-            arr.push_back(dict);
+    for (const auto& unit_ : stat) {
+        const auto& unit = unit_.AsDict();
+        if (unit.at("type").AsString() == "Stop") {
+            b.StartDict();
+            b.Key("request_id"s).Value(unit.at("id"s).AsInt());
+            PutStopToJson(unit.at("name"s).AsString(), tc, b);
+            b.EndDict();
         }
         else if (unit.at("type").AsString() == "Bus") {
-            Dict dict;
-            dict.insert({ "request_id"s, unit.at("id").AsInt() });
-            PutBusToJson(unit.at("name"s).AsString(), tc, dict);
-
-            arr.push_back(dict);
+            b.StartDict();
+            b.Key("request_id"s).Value(unit.at("id"s).AsInt());
+            PutBusToJson(unit.at("name"s).AsString(), tc, b);
+            b.EndDict();
         }
         else if (unit.at("type").AsString() == "Map") {
-            Dict dict;
-            dict.insert({ "request_id"s, unit.at("id").AsInt() });
+            b.StartDict();
+            b.Key("request_id"s).Value(unit.at("id"s).AsInt());
+
             ostringstream os;
             MakeSVG(rs, tc, os);
-            dict.insert({ "map"s,os.str() });
 
-            arr.push_back(dict);
+            b.Key("map"s).Value(os.str());
+            b.EndDict();
         }
     }
-    json::Print(Document{ arr }, os);
+    json::Print(Document{ b.EndArray().Build()}, os);
 }
 
 void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
     unordered_map<string, vector<pair<int, string>>> distances;
     for (const auto& unit_ : base) {
-        const auto& unit = unit_.AsMap();
+        const auto& unit = unit_.AsDict();
         if (unit.at("type").AsString() == "Stop") {
 
             TransportCatalogue::Stop stop;
@@ -139,7 +131,7 @@ void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
 
             if (unit.find("road_distances") != unit.end()) {
                 vector<pair<int, string>> dist_to_name;
-                for (auto& dist : unit.at("road_distances").AsMap()) {
+                for (auto& dist : unit.at("road_distances").AsDict()) {
                     dist_to_name.push_back(pair(dist.second.AsInt(), dist.first));
                 }
                 distances.insert({ stop.name, dist_to_name });
@@ -147,7 +139,7 @@ void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
         }
     }
     for (const auto& unit_ : base) {
-        const auto& unit = unit_.AsMap();
+        const auto& unit = unit_.AsDict();
         if (unit.at("type").AsString() == "Bus") {
             TransportCatalogue::BusToStops bus_to_stops;
 
@@ -170,12 +162,12 @@ void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
 }
 
 void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
-    Dict a = Load(is).GetRoot().AsMap();
+    Dict a = Load(is).GetRoot().AsDict();
     // Add
     AddBusesStops(tc, a.at("base_requests"s).AsArray());
     
     // render settings
-    RenderSettings rs(a.at("render_settings"s).AsMap());
+    RenderSettings rs(a.at("render_settings"s).AsDict());
 
     //MakeSVG(rs, tc, os);
     
