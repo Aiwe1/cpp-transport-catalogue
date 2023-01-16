@@ -1,4 +1,5 @@
 #include "json_builder.h"
+#include <algorithm>
 
 namespace json {
 Builder::Builder() {

@@ -58,6 +58,6 @@ void TransportCatalogue::SetDistance(const std::string& from, const std::string&
 int TransportCatalogue::GetDistance(Stop* st1, Stop* st2) const {
 	if (dist_.find({ st1, st2 }) != dist_.end())
 		return dist_.at({ st1, st2 });
-	// не понял, о каком цикле речь, после if что ли скобки всегда надо ставить?
+
 	return dist_.at({ st2, st1 });
 }
