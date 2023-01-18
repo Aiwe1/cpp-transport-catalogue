@@ -13,126 +13,63 @@ public:
 	class DictItemContext;
 	class ArrayItemContext;
 	class KeyItemContext;
-	class ValueKeyItemContext;
-	class ValueArrayItemContext;
-	class KeyItemContext {
+	class ItemContext {
 	public:
-		KeyItemContext(Builder& b) : b_(b) {}
-
+		ItemContext(Builder& b) : b_(b) {}
 		DictItemContext StartDict() {
 			return b_.StartDict();
 		}
 		ArrayItemContext StartArray() {
 			return b_.StartArray();
 		}
-		template <typename T>
-		ValueKeyItemContext Value(T v) {
-			return b_.Value(v);
-		}
-	private:
-		Builder& b_;
-	};
-	class ValueKeyItemContext {
-	public:
-		ValueKeyItemContext(Builder& b) : b_(b) {}
-
 		Builder& EndDict() {
 			return b_.EndDict();
+		}
+		Builder& EndArray() {
+			return b_.EndArray();
 		}
 		KeyItemContext Key(std::string s) {
 			return b_.Key(s);
 		}
-	private:
+	protected:
 		Builder& b_;
 	};
-	class DictItemContext {
+	class KeyItemContext : public ItemContext {
 	public:
-		DictItemContext(Builder& b) : b_(b) {}
+		KeyItemContext(Builder& b) : ItemContext(b) {}
 
-		Builder& EndDict() {
-			return b_.EndDict();
-		}
-		KeyItemContext Key(std::string s) {
-			return b_.Key(s);
-		}
-	private:
-		Builder& b_;
-	};
-	class ValueArrayItemContext {
-	public:
-		ValueArrayItemContext(Builder& b) : b_(b) {}
-
-		Builder& EndArray() {
-			return b_.EndArray();
-		}
-		DictItemContext StartDict() {
-			return b_.StartDict();
-		}
-		ArrayItemContext StartArray() {
-			return b_.StartArray();
-		}
 		template <typename T>
-		ValueArrayItemContext Value(T v) {
-			return { b_.Value(v) };
-		}
-	private:
-		Builder& b_;
-	};
-	class ArrayItemContext {
-	public:
-		ArrayItemContext(Builder& b) : b_(b) {}
-
-		Builder& EndArray() {
-			return b_.EndArray();
-		}
-		DictItemContext StartDict() {
-			return b_.StartDict();
-		}
-		ArrayItemContext StartArray() {
-			return b_.StartArray();
-		}
-		template <typename T>
-		ValueArrayItemContext Value(T v) {
+		DictItemContext Value(T v) {
 			return b_.Value(v);
 		}
-	private:
-		Builder& b_;
+	};
+	class DictItemContext : public ItemContext {
+	public:
+		DictItemContext(Builder& b) : ItemContext(b) {}
+	};	
+	class ArrayItemContext : public ItemContext {
+	public:
+		ArrayItemContext(Builder& b) : ItemContext(b) {}
+
+		template <typename T>
+		ArrayItemContext Value(T v) {
+			return b_.Value(v);
+		}
 	};
 
 	template <typename T>
 	Builder& Value(T v) {
-		if (prepared_) {
-			throw std::logic_error("Already Build");
-		}
-		if (!where_am_i_.empty() && where_am_i_.back() == DICT) {
-			is_key_ = false;
-		}
 		nodes_.emplace_back(v);
-		//nodes_stack_.emplace_back(&(nodes.emplace_back(v)));
+
 		return *this;
 	}
 	KeyItemContext Key(std::string s);
-
 	DictItemContext StartDict();
-
 	Builder& EndDict();
-
 	ArrayItemContext StartArray();
-
 	Builder& EndArray();
-
 	Node Build();
 private:
-	enum Where_Am_I {
-		START,
-		KEY,
-		ARRAY,
-		DICT
-	};
-	std::vector<Where_Am_I>where_am_i_;
-	bool prepared_ = false;
-	bool is_key_ = true;
-
 	std::vector<Node*> nodes_stack_;
 	std::list<Node> nodes_;
 	std::list<std::string> keys_;
