@@ -70,7 +70,7 @@ public:
 		return buses_;
 	}
 
-	std::unique_ptr<graph::DirectedWeightedGraph<double>>& MakeGraph(RouterSettings& router_settings) {
+	std::shared_ptr<graph::DirectedWeightedGraph<double>> MakeGraph(RouterSettings& router_settings) {
 		/////////////////////////////////////////
 		if (graph_) {
 			return graph_;
@@ -80,7 +80,7 @@ public:
 		using namespace std;
 		DirectedWeightedGraph<double> g(stops_.size());
 
-		map<Stop*, VertexId> stop_id;
+		//map<Stop*, VertexId> stop_id;
 		VertexId id = 0;
 		for (const auto& stop : index_stops_) {
 		    Edge<double> e;
@@ -102,9 +102,27 @@ public:
 			//stop_id.emplace(stop.second, id);
 		}
 		////////////////////
-		graph_ = make_unique<DirectedWeightedGraph<double>>(std::move(g));
+		graph_ = make_shared<DirectedWeightedGraph<double>>(std::move(g));
 		return graph_;
 	}
+
+	std::pair<graph::VertexId, graph::VertexId> GetFromAndToId(std::string_view from, std::string_view to) {
+		std::pair<graph::VertexId, graph::VertexId> from_to;
+
+		graph::VertexId id = 0;
+		for (const auto& stop : index_stops_) {
+			if (stop.first == from) {
+				from_to.first = id;
+			}
+			if (stop.first == to) {
+				from_to.second = id;
+			}
+			++id;
+		}
+		return from_to;
+	}
+
+
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;
@@ -113,5 +131,6 @@ private:
 	std::unordered_map<std::string_view, Stop*, std::hash<std::string_view>> index_stops_;
 	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> index_buses_;
 
-	std::unique_ptr<graph::DirectedWeightedGraph<double>> graph_;
+	std::shared_ptr<graph::DirectedWeightedGraph<double>> graph_;
+	std::map<Stop*, graph::VertexId> stop_id;
 };

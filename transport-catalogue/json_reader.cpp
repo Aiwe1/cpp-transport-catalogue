@@ -84,9 +84,19 @@ void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builde
 }
 
 void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b) {
+    using namespace graph;
+    auto g = tc.MakeGraph(router_settings);
+    Router router(*g);
 
-    auto& g = tc.MakeGraph(router_settings);
+    auto from_to = tc.GetFromAndToId(router_settings.from_, router_settings.to_);
 
+    auto res = router.BuildRoute(from_to.first, from_to.second);
+
+    //   На Данный Момент не совпадает на 6 минут(ровно одно время ожидания)
+
+    b.Key("total_time"s).Value(res.value().weight);
+
+    std::cout << res.value().weight << endl;
     return;
 }
 
@@ -126,7 +136,8 @@ void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCat
         else if (unit.at("type").AsString() == "Route") {
             b.StartDict();
             b.Key("request_id"s).Value(unit.at("id"s).AsInt());
-            PutRouteToJson(router_settings, tc, b);
+
+            PutRouteToJson(router_settings.SetFrom(unit.at("from").AsString()).SetTo(unit.at("to").AsString()), tc, b);
             b.EndDict();
         }
     }
