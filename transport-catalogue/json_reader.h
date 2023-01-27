@@ -15,6 +15,7 @@
 
 void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b);
 void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b);
+void PutRouteToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b);
 
 void PrintJson(RenderSettings& rs, TransportCatalogue& tc, json::Dict& a, std::ostream& os);
 void AddBusesStops(TransportCatalogue& tc, json::Array& base);

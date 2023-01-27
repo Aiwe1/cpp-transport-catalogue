@@ -80,6 +80,13 @@ void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builde
     b.EndArray();
 }
 
+void PutRouteToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b) {
+
+
+
+    ////???????
+}
+
 void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
     if (request.find("stat_requests"s) == request.end())
         return;
@@ -111,6 +118,12 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, 
             MakeSVG(rs, tc, os);
 
             b.Key("map"s).Value(os.str());
+            b.EndDict();
+        }
+        else if (unit.at("type").AsString() == "Route") {
+            b.StartDict();
+            b.Key("request_id"s).Value(unit.at("id"s).AsInt());
+            PutRouteToJson("????????", tc, b);
             b.EndDict();
         }
     }
@@ -166,6 +179,10 @@ void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
     // Add
     AddBusesStops(tc, a.at("base_requests"s).AsArray());
     
+
+    //routing_settings
+    // 
+    // 
     // render settings
     RenderSettings rs(a.at("render_settings"s).AsDict());
 
