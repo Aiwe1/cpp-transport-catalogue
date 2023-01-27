@@ -87,7 +87,6 @@ void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, jso
 
     auto& g = tc.MakeGraph(router_settings);
 
-    
     return;
 }
 
