@@ -61,3 +61,10 @@ int TransportCatalogue::GetDistance(Stop* st1, Stop* st2) const {
 
 	return dist_.at({ st2, st1 });
 }
+
+int TransportCatalogue::GetDistanceForward(Stop* st1, Stop* st2) const {
+	if (dist_.find({ st1, st2 }) != dist_.end()) 
+		return dist_.at({ st1, st2 });
+	
+	return -1;
+}

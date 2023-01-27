@@ -1,7 +1,10 @@
+#include <map>
+
 #include "json_reader.h"
 
 using namespace json;
 using namespace std;
+using namespace graph;
 
 void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b) {
     const auto& bus = tc.FindBus(name);
@@ -80,14 +83,15 @@ void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builde
     b.EndArray();
 }
 
-void PutRouteToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b) {
+void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b) {
 
+    auto& g = tc.MakeGraph(router_settings);
 
-
-    ////???????
+    
+    return;
 }
 
-void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
+void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
     if (request.find("stat_requests"s) == request.end())
         return;
 
@@ -123,7 +127,7 @@ void PrintJson(RenderSettings &rs, TransportCatalogue& tc, json::Dict& request, 
         else if (unit.at("type").AsString() == "Route") {
             b.StartDict();
             b.Key("request_id"s).Value(unit.at("id"s).AsInt());
-            PutRouteToJson("????????", tc, b);
+            PutRouteToJson(router_settings, tc, b);
             b.EndDict();
         }
     }
@@ -180,15 +184,15 @@ void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
     AddBusesStops(tc, a.at("base_requests"s).AsArray());
     
 
-    //routing_settings
-    // 
-    // 
-    // render settings
-    RenderSettings rs(a.at("render_settings"s).AsDict());
+    //routing_settings    
+    RenderSettings render_settings(a.at("render_settings"s).AsDict());
 
+    // render settings
+    RouterSettings router_settings(a.at("routing_settings"s).AsDict());
+    
     //MakeSVG(rs, tc, os);
     
     //test
     // Requests
-    PrintJson(rs, tc, a, os);
+    PrintJson(render_settings, router_settings, tc, a, os);
 }

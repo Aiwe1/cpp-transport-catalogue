@@ -13,8 +13,11 @@
 #include <unordered_map>
 #include <functional>
 #include <string_view>
+#include <memory>
 
 #include "geo.h"
+#include "graph.h"
+#include "transport_router.h"
 
 class TransportCatalogue {
 public:
@@ -61,11 +64,47 @@ public:
 	const Bus* FindBus(const std::string& name) const;
 	void SetDistance(const std::string& from, const std::string& to, int dist);
 	int GetDistance(Stop* st1, Stop* st2) const;
+	int GetDistanceForward(Stop* st1, Stop* st2) const;
 
 	std::deque<Bus> GetAllBuses() const {
 		return buses_;
 	}
 
+	std::unique_ptr<graph::DirectedWeightedGraph<double>>& MakeGraph(RouterSettings& router_settings) {
+		/////////////////////////////////////////
+		if (graph_) {
+			return graph_;
+		}
+
+		using namespace graph;
+		using namespace std;
+		DirectedWeightedGraph<double> g(stops_.size());
+
+		map<Stop*, VertexId> stop_id;
+		VertexId id = 0;
+		for (const auto& stop : index_stops_) {
+		    Edge<double> e;
+		    e.from = id;
+		    e.to = id;
+			e.weight = router_settings.bus_wait_time;
+		    g.AddEdge(e); /// Возвращает ID ребра, мб придётся юзать
+			//stop_id.emplace(stop.second, id);
+			stop_id[stop.second] = id;
+		    ++id;
+		}
+		for (const auto& dist : dist_) {
+			Edge<double> e;
+			e.from = stop_id.at(dist.first.from);
+			e.to = stop_id.at(dist.first.to);
+			e.weight = static_cast<double>(router_settings.bus_wait_time)
+				+ static_cast<double>(dist.second) / router_settings.bus_velocity;
+			g.AddEdge(e); /// Возвращает ID ребра, мб придётся юзать
+			//stop_id.emplace(stop.second, id);
+		}
+		////////////////////
+		graph_ = make_unique<DirectedWeightedGraph<double>>(std::move(g));
+		return graph_;
+	}
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;
@@ -73,4 +112,6 @@ private:
 	std::unordered_map<PairStops, int, PairStopsHasher> dist_;
 	std::unordered_map<std::string_view, Stop*, std::hash<std::string_view>> index_stops_;
 	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> index_buses_;
+
+	std::unique_ptr<graph::DirectedWeightedGraph<double>> graph_;
 };
