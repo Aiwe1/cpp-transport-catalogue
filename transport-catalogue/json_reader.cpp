@@ -85,6 +85,7 @@ void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builde
 
 void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b) {
     using namespace graph;
+    using EdgeInfo = TransportCatalogue::EdgeInfo;
     auto g = tc.MakeGraph(router_settings);
     Router router(*g);
 
@@ -94,7 +95,23 @@ void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, jso
 
     //   На Данный Момент не совпадает на 6 минут(ровно одно время ожидания)
 
-    b.Key("total_time"s).Value(res.value().weight);
+    b.Key("total_time"s).Value(res.value().weight); ////   каждый раз прибавляется время ожидания?
+    
+    double total_time = 0.0;
+    for (auto& e_id : res.value().edges) {
+        EdgeInfo edge_info = tc.GetEdgeInfo(e_id);
+        if (edge_info.bus) {
+            std::cout << "bus:  " << edge_info.bus->name << ": " << edge_info.weight << endl;
+        }
+        if (edge_info.from) {
+            std::cout << "from:  " << edge_info.from->name << ": " << edge_info.weight << endl;
+        }
+        if (edge_info.to) {
+            std::cout << "to:  " << edge_info.to->name << ": " << edge_info.weight << endl;
+        }
+    }
+
+
 
     std::cout << res.value().weight << endl;
     return;

@@ -70,6 +70,13 @@ public:
 		return buses_;
 	}
 
+	struct EdgeInfo {
+		Stop* from = nullptr;
+		Stop* to = nullptr;
+		Bus* bus = nullptr;
+		double weight = 0.0;
+	};
+
 	std::shared_ptr<graph::DirectedWeightedGraph<double>> MakeGraph(RouterSettings& router_settings) {
 		/////////////////////////////////////////
 		if (graph_) {
@@ -87,28 +94,52 @@ public:
 		    e.from = id;
 		    e.to = id;
 			e.weight = router_settings.bus_wait_time;
-		    g.AddEdge(e); /// Возвращает ID ребра, мб придётся юзать
+		    EdgeId e_id = g.AddEdge(e); /// Возвращает ID ребра
 			//stop_id.emplace(stop.second, id);
+			EdgeInfo edge_info{ stop.second , stop.second, nullptr};
 			stop_id[stop.second] = id;
+			edge_to_info_.insert({ e_id, edge_info });
 		    ++id;
 		}
-		for (const auto& dist : dist_) {
-			Edge<double> e;
-			e.from = stop_id.at(dist.first.from);
-			e.to = stop_id.at(dist.first.to);
-			e.weight = static_cast<double>(router_settings.bus_wait_time)
-				+ static_cast<double>(dist.second) / router_settings.bus_velocity;
-			g.AddEdge(e); /// Возвращает ID ребра, мб придётся юзать
-			//stop_id.emplace(stop.second, id);
+		
+		for (const auto& [n , bus] : index_buses_) {
+			for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
+				Edge<double> e;
+				e.from = stop_id.at(bus->stops.at(i));
+				e.to = stop_id.at(bus->stops.at(i + 1));
+
+				int length = GetDistance(bus->stops.at(i), bus->stops.at(i + 1));
+				e.weight = static_cast<double>(router_settings.bus_wait_time)
+					+ static_cast<double>(length) / router_settings.bus_velocity;
+				EdgeId e_id = g.AddEdge(e);
+				EdgeInfo edge_info{ bus->stops.at(i) , bus->stops.at(i + 1), bus,  e.weight };
+				edge_to_info_.insert({ e_id, edge_info });
+			}
+
 		}
+		
+		//for (const auto& dist : dist_) {
+		//	Edge<double> e;
+		//	e.from = stop_id.at(dist.first.from);
+		//	e.to = stop_id.at(dist.first.to);
+		//	e.weight = static_cast<double>(router_settings.bus_wait_time)
+		//		+ static_cast<double>(dist.second) / router_settings.bus_velocity;
+		//	EdgeId e_id = g.AddEdge(e); /// Возвращает ID ребра, мб придётся юзать
+		//	edge_to_vertex_id_.emplace(e_id, e);
+		//	//stop_id.emplace(stop.second, id);
+		//}
 		////////////////////
 		graph_ = make_shared<DirectedWeightedGraph<double>>(std::move(g));
 		return graph_;
 	}
 
+	EdgeInfo& GetEdgeInfo(graph::EdgeId e_id) {
+		return edge_to_info_.at(e_id);
+	}
+
 	std::pair<graph::VertexId, graph::VertexId> GetFromAndToId(std::string_view from, std::string_view to) {
 		std::pair<graph::VertexId, graph::VertexId> from_to;
-
+	
 		graph::VertexId id = 0;
 		for (const auto& stop : index_stops_) {
 			if (stop.first == from) {
@@ -122,7 +153,6 @@ public:
 		return from_to;
 	}
 
-
 private:
 	std::deque<Stop> stops_;
 	std::deque<Bus> buses_;
@@ -132,5 +162,7 @@ private:
 	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> index_buses_;
 
 	std::shared_ptr<graph::DirectedWeightedGraph<double>> graph_;
+
+	std::map<graph::EdgeId, EdgeInfo> edge_to_info_;
 	std::map<Stop*, graph::VertexId> stop_id;
 };
