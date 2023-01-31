@@ -68,3 +68,93 @@ int TransportCatalogue::GetDistanceForward(Stop* st1, Stop* st2) const {
 	
 	return -1;
 }
+std::shared_ptr<graph::Router<double>> TransportCatalogue::MakeRouter(RouterSettings& router_settings) {
+	/////////////////////////////////////////
+	if (router_) {
+		return router_;
+	}
+
+	using namespace graph;
+	using namespace std;
+	DirectedWeightedGraph<double> g(stops_.size());
+
+	//map<Stop*, VertexId> stop_id;
+	VertexId id = 0;
+	for (const auto& stop : index_stops_) {
+		Edge<double> e;
+		e.from = id;
+		e.to = id;
+		e.weight = router_settings.bus_wait_time;
+		EdgeId e_id = g.AddEdge(e); /// Возвращает ID ребра
+		//stop_id.emplace(stop.second, id);
+		EdgeInfo edge_info{ stop.second , stop.second, nullptr };
+		stop_id[stop.second] = id;
+		edge_to_info_.insert({ e_id, edge_info });
+		++id;
+	}
+
+	for (const auto& [n, bus] : index_buses_) {
+		for (int i = 0; i < bus->stops.size() - 1; ++i) {
+			for (int j = i + 1; j < bus->stops.size(); ++j) {
+				{
+					Edge<double> e;
+					e.from = stop_id.at(bus->stops.at(i));
+					e.to = stop_id.at(bus->stops.at(j));
+
+					int length = 0;
+					for (int k = i; k < j; ++k) {
+						length += GetDistance(bus->stops.at(k), bus->stops.at(k + 1));
+					}
+
+					e.weight = static_cast<double>(router_settings.bus_wait_time)
+						+ static_cast<double>(length) / router_settings.bus_velocity;
+					EdgeId e_id = g.AddEdge(e);
+					EdgeInfo edge_info{ bus->stops.at(i) , bus->stops.at(j), bus,  e.weight, j - i };
+					edge_to_info_.insert({ e_id, edge_info });
+				}
+				if (!bus->is_round_) {
+					Edge<double> e;
+					e.from = stop_id.at(bus->stops.at(j));
+					e.to = stop_id.at(bus->stops.at(i));
+
+					int length = 0;
+					for (int k = j; k > i; --k) {
+						length += GetDistance(bus->stops.at(k), bus->stops.at(k - 1));
+					}
+
+					e.weight = static_cast<double>(router_settings.bus_wait_time)
+						+ static_cast<double>(length) / router_settings.bus_velocity;
+					EdgeId e_id = g.AddEdge(e);
+					EdgeInfo edge_info{ bus->stops.at(j) , bus->stops.at(i), bus,  e.weight, j - i };
+					edge_to_info_.insert({ e_id, edge_info });
+				}
+			}
+		}
+		//if (!bus->is_round_)
+		//{
+		//	for (int i = bus->stops.size() - 1; i > 0; --i) {
+		//		for (int j = i - 1; j >= 0; --j) {
+		//			Edge<double> e;
+		//			e.from = stop_id.at(bus->stops.at(i));
+		//			e.to = stop_id.at(bus->stops.at(j));
+		//
+		//			int length = 0;
+		//			for (int k = i; k > j; --k) {
+		//				length += GetDistance(bus->stops.at(k), bus->stops.at(k - 1));
+		//			}
+		//
+		//			e.weight = static_cast<double>(router_settings.bus_wait_time)
+		//				+ static_cast<double>(length) / router_settings.bus_velocity;
+		//			EdgeId e_id = g.AddEdge(e);
+		//			EdgeInfo edge_info{ bus->stops.at(i) , bus->stops.at(j), bus,  e.weight, i - j };
+		//			edge_to_info_.insert({ e_id, edge_info });
+		//		}
+		//	}
+		//}
+	}
+
+	graph_ = make_shared<DirectedWeightedGraph<double>>(std::move(g));
+	Router<double> r(*graph_);
+	router_ = make_shared<Router<double>>(move(r));
+	return router_;
+}

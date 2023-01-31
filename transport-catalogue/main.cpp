@@ -11,11 +11,10 @@ int main()
     //setlocale(LC_ALL, "Russian");
     TransportCatalogue tc;
 
-    std::ifstream in("C:\\Projects\\TC\\cpp-transport-catalogue\\transport-catalogue\\input-2.json");
-    std::ofstream out("C:\\Projects\\TC\\cpp-transport-catalogue\\transport-catalogue\\output.json");
-
-
-    ReadAll(tc, in, out);
+    //std::ifstream in("C:\\Projects\\TC\\cpp-transport-catalogue\\transport-catalogue\\input-2.json");
+    //std::ofstream out("C:\\Projects\\TC\\cpp-transport-catalogue\\transport-catalogue\\output.json");
+    //
+    //ReadAll(tc, in, out);
     
-    //ReadAll(tc, std::cin, std::cout);
+    ReadAll(tc, std::cin, std::cout);
 }
