@@ -2,6 +2,7 @@
 
 #include "router.h"
 #include "json.h"
+#include "transport_catalogue.h"
 
 struct RouterSettings {
 	constexpr static double METER_PER_MIN = 1000.0 / 60.0;
@@ -24,4 +25,45 @@ struct RouterSettings {
 	double bus_velocity; // meter / min
 	std::string_view from_;
 	std::string_view to_;
+};
+
+class TransportRouter {
+public:	
+	explicit TransportRouter(const TransportCatalogue& tc) : tc_(tc) {}
+
+	struct EdgeInfo {
+		TransportCatalogue::Stop* from = nullptr;
+		TransportCatalogue::Stop* to = nullptr;
+		TransportCatalogue::Bus* bus = nullptr;
+		double weight = 0.0;
+		int span_count = 0;
+	};
+	EdgeInfo& GetEdgeInfo(graph::EdgeId e_id) {
+		return edge_to_info_.at(e_id);
+	}
+	std::pair<graph::VertexId, graph::VertexId> GetFromAndToId(std::string_view from, std::string_view to);
+
+	void StopsToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
+	void BusesToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
+
+	//std::shared_ptr<graph::Router<double>> 
+	void MakeRouter(const RouterSettings& router_settings);
+
+	auto GetRoteInfo(RouterSettings router_settings) {
+		MakeRouter(router_settings);
+
+		auto from_to = GetFromAndToId(router_settings.from_, router_settings.to_);
+
+		auto res = router_ptr_->BuildRoute(from_to.first, from_to.second);
+		return res;
+	}
+
+private:
+	std::shared_ptr<graph::DirectedWeightedGraph<double>> graph_ptr_;
+	std::shared_ptr<graph::Router<double>> router_ptr_;
+
+	std::map<graph::EdgeId, EdgeInfo> edge_to_info_;
+	std::map<TransportCatalogue::Stop*, graph::VertexId> stop_id;
+
+	const TransportCatalogue& tc_;
 };

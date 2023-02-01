@@ -6,6 +6,8 @@
 #include <deque>
 #include <unordered_map>
 #include <algorithm>
+#include <map>
+#include <memory>
 
 #include "geo.h"
 #include "transport_catalogue.h"
@@ -16,7 +18,7 @@
 
 void PutBusToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b);
 void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builder& b);
-void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b);
+void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b, std::shared_ptr<TransportRouter>& tr);
 
 void PrintJson(RenderSettings& rs, RouterSettings& router_settings, TransportCatalogue& tc, json::Dict& a, std::ostream& os);
 void AddBusesStops(TransportCatalogue& tc, json::Array& base);

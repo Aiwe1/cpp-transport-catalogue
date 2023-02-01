@@ -1,5 +1,3 @@
-#include <map>
-
 #include "json_reader.h"
 
 using namespace json;
@@ -83,31 +81,33 @@ void PutStopToJson(const std::string& name, TransportCatalogue& tc, json::Builde
     b.EndArray();
 }
 
-void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, json::Builder& b) {
-    using namespace graph;
-    using EdgeInfo = TransportCatalogue::EdgeInfo;
-    //auto g = tc.MakeGraph(router_settings);
-    //Router router(*g);
-    auto router = tc.MakeRouter(router_settings);
+void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, 
+    json::Builder& b, shared_ptr<TransportRouter>& tr) {
 
-    auto from_to = tc.GetFromAndToId(router_settings.from_, router_settings.to_);
+    using EdgeInfo = TransportRouter::EdgeInfo;
 
-    auto res = router->BuildRoute(from_to.first, from_to.second);
+    if (!tr) {
+        TransportRouter tr_(tc);
+        tr = std::make_shared<TransportRouter>(std::move(tr_));
+    }
+    //auto router = tr->MakeRouter(router_settings);
+    //
+    //auto from_to = tr->GetFromAndToId(router_settings.from_, router_settings.to_);
+    //
+    //auto res = router->BuildRoute(from_to.first, from_to.second);
+    auto res = tr->GetRoteInfo(router_settings);
 
-    //   На Данный Момент не совпадает на 6 минут(ровно одно время ожидания)
     if (!res) {
         // "error_message": "not found"
         b.Key("error_message"s).Value("not found");
         return;
     }
 
-    b.Key("total_time"s).Value(res.value().weight); ////   каждый раз прибавляется время ожидания?
-    
-    //auto& asdasd = res.value().edges;
+    b.Key("total_time"s).Value(res.value().weight); 
 
     b.Key("items"s).StartArray();
     for (auto e_id = res.value().edges.begin(); e_id != res.value().edges.end(); ++e_id) {
-        EdgeInfo edge_info = tc.GetEdgeInfo(*e_id);
+        EdgeInfo edge_info = tr->GetEdgeInfo(*e_id);
         b.StartDict();
         b.Key("type"s).Value("Wait"s);
         b.Key("time"s).Value(router_settings.bus_wait_time);
@@ -122,13 +122,9 @@ void PutRouteToJson(RouterSettings& router_settings, TransportCatalogue& tc, jso
             b.Key("bus").Value(edge_info.bus->name);
 
             b.EndDict();
-
-            //std::cout << "bus:  " << edge_info.bus->name << ": " << edge_info.weight << endl;
         }
     }
     b.EndArray();
-    //std::cout << res.value().weight << endl;
-    //std::cout << "-------------" << endl;
 }
 
 void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCatalogue& tc, json::Dict& request, std::ostream& os) {
@@ -136,7 +132,8 @@ void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCat
         return;
 
     const Array& stat = request.at("stat_requests"s).AsArray();
-
+    shared_ptr<TransportRouter> tr;
+    
     json::Builder b;
     b.StartArray();
 
@@ -168,7 +165,7 @@ void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCat
             b.StartDict();
             b.Key("request_id"s).Value(unit.at("id"s).AsInt());
 
-            PutRouteToJson(router_settings.SetFrom(unit.at("from").AsString()).SetTo(unit.at("to").AsString()), tc, b);
+            PutRouteToJson(router_settings.SetFrom(unit.at("from").AsString()).SetTo(unit.at("to").AsString()), tc, b, tr);
             b.EndDict();
         }
     }

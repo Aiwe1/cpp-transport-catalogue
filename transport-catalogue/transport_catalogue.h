@@ -17,7 +17,7 @@
 
 #include "geo.h"
 #include "graph.h"
-#include "transport_router.h"
+#include "router.h"
 
 class TransportCatalogue {
 public:
@@ -70,34 +70,11 @@ public:
 		return buses_;
 	}
 
-	struct EdgeInfo {
-		Stop* from = nullptr;
-		Stop* to = nullptr;
-		Bus* bus = nullptr;
-		double weight = 0.0;
-		int span_count = 0;
-	};
-
-	std::shared_ptr<graph::Router<double>> MakeRouter(RouterSettings& router_settings);
-
-	EdgeInfo& GetEdgeInfo(graph::EdgeId e_id) {
-		return edge_to_info_.at(e_id);
+	std::unordered_map<std::string_view, Stop*, std::hash<std::string_view>> GetIndexStops() const {
+		return index_stops_;
 	}
-
-	std::pair<graph::VertexId, graph::VertexId> GetFromAndToId(std::string_view from, std::string_view to) {
-		std::pair<graph::VertexId, graph::VertexId> from_to;
-	
-		graph::VertexId id = 0;
-		for (const auto& stop : index_stops_) {
-			if (stop.first == from) {
-				from_to.first = id;
-			}
-			if (stop.first == to) {
-				from_to.second = id;
-			}
-			++id;
-		}
-		return from_to;
+	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> GetIndexBuses() const {
+		return index_buses_;
 	}
 
 private:
@@ -107,10 +84,4 @@ private:
 	std::unordered_map<PairStops, int, PairStopsHasher> dist_;
 	std::unordered_map<std::string_view, Stop*, std::hash<std::string_view>> index_stops_;
 	std::unordered_map<std::string_view, Bus*, std::hash<std::string_view>> index_buses_;
-
-	std::shared_ptr<graph::DirectedWeightedGraph<double>> graph_;
-	std::shared_ptr<graph::Router<double>> router_;
-
-	std::map<graph::EdgeId, EdgeInfo> edge_to_info_;
-	std::map<Stop*, graph::VertexId> stop_id;
 };
