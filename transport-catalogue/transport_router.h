@@ -41,10 +41,10 @@ public:
 	EdgeInfo& GetEdgeInfo(graph::EdgeId e_id) {
 		return edge_to_info_.at(e_id);
 	}
-	std::pair<graph::VertexId, graph::VertexId> GetFromAndToId(std::string_view from, std::string_view to);
+	std::pair<graph::VertexId, graph::VertexId> GetPairId(std::string_view from, std::string_view to);
 
-	void StopsToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
-	void BusesToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
+	void AddStopsToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
+	void AddBusesToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings);
 
 	//std::shared_ptr<graph::Router<double>> 
 	void MakeRouter(const RouterSettings& router_settings);
@@ -52,7 +52,7 @@ public:
 	auto GetRoteInfo(RouterSettings router_settings) {
 		MakeRouter(router_settings);
 
-		auto from_to = GetFromAndToId(router_settings.from_, router_settings.to_);
+		auto from_to = GetPairId(router_settings.from_, router_settings.to_);
 
 		auto res = router_ptr_->BuildRoute(from_to.first, from_to.second);
 		return res;

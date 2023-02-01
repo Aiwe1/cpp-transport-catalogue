@@ -1,6 +1,6 @@
 #include "transport_router.h"
 
-std::pair<graph::VertexId, graph::VertexId> TransportRouter::GetFromAndToId(std::string_view from, std::string_view to) {
+std::pair<graph::VertexId, graph::VertexId> TransportRouter::GetPairId(std::string_view from, std::string_view to) {
 	std::pair<graph::VertexId, graph::VertexId> from_to;
 
 	graph::VertexId id = 0;
@@ -27,15 +27,15 @@ void TransportRouter::MakeRouter(const RouterSettings& router_settings) {
 	const auto& index_stops = tc_.GetIndexStops();
 	DirectedWeightedGraph<double> graph_(index_stops.size());
 
-	StopsToGraph(graph_, router_settings);
-	BusesToGraph(graph_, router_settings);
+	AddStopsToGraph(graph_, router_settings);
+	AddBusesToGraph(graph_, router_settings);
 
 	graph_ptr_ = make_shared<DirectedWeightedGraph<double>>(std::move(graph_));
 	Router<double> router_(*graph_ptr_);
 	router_ptr_ = make_shared<Router<double>>(move(router_));
 }
 
-void TransportRouter::StopsToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings) {
+void TransportRouter::AddStopsToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings) {
 	using namespace graph;
 	using namespace std;
 
@@ -54,7 +54,7 @@ void TransportRouter::StopsToGraph(graph::DirectedWeightedGraph<double>& graph_,
 	}
 }
 
-void TransportRouter::BusesToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings) {
+void TransportRouter::AddBusesToGraph(graph::DirectedWeightedGraph<double>& graph_, const RouterSettings& router_settings) {
 	using namespace graph;
 	using namespace std;
 
