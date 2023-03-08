@@ -51,6 +51,42 @@ struct PrintColor {
     }
 };
 
+struct Color_norm {
+    std::string str_;
+    Rgb rgb_;
+    Rgba rgba_;
+    int what_ = -1;
+};
+struct GetNormColor{
+    Color_norm& col;
+
+    void operator()(std::monostate) const {
+        
+    }
+    void operator()(std::string s) {
+        col.str_ = s;
+        col.what_ = 1;
+    }
+    void operator()(Rgb c) {
+        col.rgb_.red = c.red;
+        col.rgb_.green = c.green;
+        col.rgb_.blue = c.blue;
+        col.what_ = 2;
+    }
+    void operator()(Rgba c) {
+        col.rgba_.red = c.red;
+        col.rgba_.green = c.green;
+        col.rgba_.blue = c.blue;
+        col.rgba_.opacity = c.opacity;
+        col.what_ = 3;
+    }
+};
+
+inline Color_norm& GetColor(Color_norm& c_n, const Color& col) {
+    std::visit(GetNormColor{ c_n }, col);
+    return c_n;
+}
+
 inline std::ostream& operator<<(std::ostream& os, const Color& col) {
 
     std::visit(PrintColor{ os }, col);

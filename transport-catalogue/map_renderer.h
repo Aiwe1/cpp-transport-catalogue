@@ -86,7 +86,8 @@ private:
 };
 
 struct RenderSettings {
-    explicit RenderSettings(const json::Dict& d);
+    RenderSettings() {}
+    RenderSettings(const json::Dict& d);
 
     double width;
     double height;

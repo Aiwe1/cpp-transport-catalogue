@@ -6,11 +6,14 @@
 
 struct RouterSettings {
 	constexpr static double METER_PER_MIN = 1000.0 / 60.0;
-	explicit RouterSettings(const json::Dict& d) {
+	RouterSettings() {}
+	RouterSettings(const json::Dict& d) {
 		using namespace json;
 
 		bus_wait_time = static_cast<double>(d.at("bus_wait_time").AsInt());
 		bus_velocity = d.at("bus_velocity").AsDouble() * METER_PER_MIN;
+	}
+	RouterSettings(double bus_w_t, double bus_v) : bus_wait_time(bus_w_t), bus_velocity(bus_v) {
 	}
 	RouterSettings& SetFrom(std::string_view s) {
 		from_ = s;

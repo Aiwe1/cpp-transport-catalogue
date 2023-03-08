@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include <iostream>
@@ -14,3 +15,4 @@ void PrintBus(const std::string& name, TransportCatalogue& tc, std::ostream& out
 void PrintStop(const std::string& name, TransportCatalogue& tc, std::ostream& out);
 
 void ReadRequests(TransportCatalogue& tc, std::istream& in, std::ostream& out);
+

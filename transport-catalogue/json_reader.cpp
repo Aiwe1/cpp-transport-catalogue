@@ -142,13 +142,13 @@ void PrintJson(RenderSettings &rs, RouterSettings &router_settings, TransportCat
         if (unit.at("type").AsString() == "Stop") {
             b.StartDict();
             b.Key("request_id"s).Value(unit.at("id"s).AsInt());
-            PutStopToJson(unit.at("name"s).AsString(), tc, b);
+            PutStopToJson(unit.at("name").AsString(), tc, b);
             b.EndDict();
         }
         else if (unit.at("type").AsString() == "Bus") {
             b.StartDict();
             b.Key("request_id"s).Value(unit.at("id"s).AsInt());
-            PutBusToJson(unit.at("name"s).AsString(), tc, b);
+            PutBusToJson(unit.at("name").AsString(), tc, b);
             b.EndDict();
         }
         else if (unit.at("type").AsString() == "Map") {
@@ -212,7 +212,6 @@ void AddBusesStops(TransportCatalogue& tc, const json::Array& base) {
         for (auto& [dis, to] : dis_to_stops) {
             tc.SetDistance(from, to, dis);
         }
-
     }
 }
 
@@ -233,4 +232,50 @@ void ReadAll(TransportCatalogue& tc, std::istream& is, std::ostream& os) {
     //test
     // Requests
     PrintJson(render_settings, router_settings, tc, a, os);
+} 
+
+void MakeBase(std::istream& is) {
+    Dict a = Load(is).GetRoot().AsDict();
+
+    //routing_settings    
+    RenderSettings render_settings;
+    if (a.find("render_settings"s) != a.end()) {
+        RenderSettings render_(a.at("render_settings"s).AsDict());
+        render_settings = std::move(render_);
+    }
+    // render settings
+    RouterSettings router_settings;
+    if (a.find("routing_settings"s) != a.end()) {
+        RouterSettings router_(a.at("routing_settings"s).AsDict());
+        router_settings = std::move(router_);
+    }
+
+    // filename
+    string file_name = a.at("serialization_settings"s).AsDict().at("file"s).AsString();
+    //string file_name = "C:\\Projects\\again cmake\\out.db"s;
+    std::ofstream out(file_name, ios::binary);
+
+    SaveTo(out, render_settings, router_settings, a.at("base_requests"s).AsArray());
+    out.close();
+}
+
+void ProcessRequests(std::istream& is) {
+    Dict a = Load(is).GetRoot().AsDict();
+
+    TransportCatalogue tc;
+    RenderSettings render_settings;
+    RouterSettings router_settings;
+    {
+        string file_name = a.at("serialization_settings"s).AsDict().at("file"s).AsString();
+        //string file_name = "C:\\Projects\\again cmake\\out.db"s;
+        std::ifstream in(file_name, ios::binary);
+
+        Deserialize(in, tc, render_settings, router_settings);
+        in.close();
+    }
+    //std::ofstream out("C:\\Projects\\again cmake\\out.json"s);
+    //PrintJson(render_settings, router_settings, tc, a, out);
+    std::ofstream outf("C:\\Projects\\again cmake\\out.json"s);
+    PrintJson(render_settings, router_settings, tc, a, outf);
+    outf.close();
 }

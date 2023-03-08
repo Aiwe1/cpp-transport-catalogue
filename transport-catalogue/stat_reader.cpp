@@ -1,5 +1,6 @@
+/*
 #include "stat_reader.h"
-#include "input_reader.h"
+#include "domain.h"
 
 void PrintBus(const std::string& name, TransportCatalogue& tc, std::ostream& out) {
 	using namespace std;
@@ -100,3 +101,4 @@ void ReadRequests(TransportCatalogue& tc, std::istream& in, std::ostream& out) {
 		}
     }
 }
+*/
