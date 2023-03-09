@@ -273,9 +273,9 @@ void ProcessRequests(std::istream& is) {
         Deserialize(in, tc, render_settings, router_settings);
         in.close();
     }
-    //std::ofstream out("C:\\Projects\\again cmake\\out.json"s);
-    //PrintJson(render_settings, router_settings, tc, a, out);
-    std::ofstream outf("C:\\Projects\\again cmake\\out.json"s);
-    PrintJson(render_settings, router_settings, tc, a, outf);
-    outf.close();
+
+    PrintJson(render_settings, router_settings, tc, a, std::cout);
+    //std::ofstream outf("C:\\Projects\\again cmake\\out.json"s);
+    //PrintJson(render_settings, router_settings, tc, a, outf);
+    //outf.close();
 }
